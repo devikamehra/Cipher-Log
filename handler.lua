@@ -5,6 +5,7 @@ local system_constants = require "lua_system_constants"
 local basic_serializer = require "kong.plugins.log-serializers.basic"
 local BasePlugin = require "kong.plugins.base_plugin"
 local blowfish = require "resty.nettle.blowfish"
+local base64 = require "resty.nettle.base64"
 
 local ngx_timer = ngx.timer.at
 local string_len = string.len
@@ -44,33 +45,36 @@ local function string_to_char(str)
   return ffi.cast("uint8_t*", str)
 end
 
-local function changeLog(conf, message, str)
-  ngx.log(ngx.ERR, "[file-log] success", str)
-  local string
-  for key, value in pairs(message) do
-	if type(value) == "string" then
-		ngx.log(ngx.ERR, "[cipher-log] success", value)
-	end
-  end
-  ngx.log(ngx.ERR, "[cipher-log] success", string)
+function split(inputstr)
+        local t={} ; i=1
+        for str in string.gmatch(inputstr, "([^.]+)") do
+                t[i] = str
+                i = i + 1
+        end
+        return t
 end
 
-local function explore(conf, message, str)
+local function explore(conf, message, str, array, index)
   for key, value in pairs(message) do
   	if type(value) ~= "table" then
-		if key == str then
+		if key == array[index] then
 			local plaintext = message[key]
 			if type(plaintext) ~= "string" then
                         	plaintext = tostring(plaintext)
                 	end
-			message[key] = bf:encrypt(plaintext)
+			message[key] = base64.encode(bf:encrypt(plaintext))
 			found = true
 		end
         else
-                explore(conf, value, str)
+		if key == array[index] and index < table.getn(array) then
+    	            explore(conf, value, str, array, index + 1)
+		else
+		    explore(conf, value, str, array, index)
+		end
         end
   end
 end
+
 -- Log to a file. Function used as callback from an nginx timer.
 -- @param `premature` see OpenResty `ngx.timer.at()`
 -- @param `conf`     Configuration table, holds http endpoint details
@@ -81,7 +85,7 @@ local function log(premature, conf, message)
   local y = conf.cipher
   for z = 1, table.getn(y) do   
 	found = false
-	explore(conf, message, y[z])
+	explore(conf, message, y[z], split(y[z]), 1)
 	if found == false then
 		ngx.log(ngx.ERR, "[cipher-log] failure", "The property " .. y[z] .. " was not found. This could be a spelling error too.")
 	end
