@@ -4,7 +4,6 @@ local cjson = require "cjson"
 local system_constants = require "lua_system_constants"
 local basic_serializer = require "kong.plugins.log-serializers.basic"
 local BasePlugin = require "kong.plugins.base_plugin"
-local blowfish = require "resty.nettle.blowfish"
 local base64 = require "resty.nettle.base64"
 
 local ngx_timer = ngx.timer.at
@@ -29,7 +28,10 @@ char *strerror(int errnum);
 -- fd tracking utility functions
 local file_descriptors = {}
 
-local bf = blowfish.new("testtesttesttest")
+local key = "testtesttesttest"
+local key1 = "testtest"
+
+local algo = "blowfish"
 
 local found = false
 
@@ -54,22 +56,83 @@ function split(inputstr)
         return t
 end
 
-local function explore(conf, message, str, array, index)
+local function encryptBlowfish(plaintext)
+        local blowfish = require "resty.nettle.blowfish"
+	local bf = blowfish.new(key)
+	if type(plaintext) ~= "string" then
+        	plaintext = tostring(plaintext)
+        end
+        return base64.encode(bf:encrypt(plaintext))
+end
+
+local function encryptAES(plaintext)
+        local aes = require "resty.nettle.aes"
+        local ae = aes.new(key)
+        if type(plaintext) ~= "string" then
+                plaintext = tostring(plaintext)
+        end
+        return base64.encode(ae:encrypt(plaintext))
+end
+
+local function encryptDES(plaintext)
+        local des = require "resty.nettle.des"
+        local de = des.new(key1)
+        if type(plaintext) ~= "string" then
+                plaintext = tostring(plaintext)
+        end
+        return base64.encode(de:encrypt(plaintext))
+end
+
+local function encryptTwofish(plaintext)
+        local twofish = require "resty.nettle.twofish"
+        local tf = twofish.new(key)
+        if type(plaintext) ~= "string" then
+                plaintext = tostring(plaintext)
+        end
+        return base64.encode(tf:encrypt(plaintext))
+end
+
+local function encrypt(text)
+  
+  if algo == "aes" then
+  	return encryptAES(text)
+  elseif algo == "blowfish" then
+        return encryptBlowfish(text)
+  elseif algo == "des" then
+        return encryptDES(text)
+  elseif algo == "twofish" then
+        return encryptTwofish(text)
+  else
+        return encryptBlowfish(text)
+  end
+end
+
+local function encryptAll(message)
+	for key, value in pairs(message) do
+                        message[key] = encrypt(message[key])
+                        found = true
+        end
+end
+
+local function explore(message, array, index)
   for key, value in pairs(message) do
   	if type(value) ~= "table" then
-		if key == array[index] then
-			local plaintext = message[key]
-			if type(plaintext) ~= "string" then
-                        	plaintext = tostring(plaintext)
-                	end
-			message[key] = base64.encode(bf:encrypt(plaintext))
+		if key == array[index] and index == table.getn(array) then
+			message[key] = encrypt(message[key])
+
 			found = true
 		end
         else
-		if key == array[index] and index < table.getn(array) then
-    	            explore(conf, value, str, array, index + 1)
+		if key == array[index] then
+    	           if index < table.getn(array) then
+			 explore(value, array, index + 1)
+		   elseif index == table.getn(array) then
+			 encryptAll(value)
+		   else
+			
+		   end
 		else
-		    explore(conf, value, str, array, index)
+		    explore(value, array, index)
 		end
         end
   end
@@ -82,10 +145,12 @@ end
 local function log(premature, conf, message)
   if premature then return end
 
-  local y = conf.cipher
+  algo = conf.cipher_tech
+
+  local y = conf.total_encrypt
   for z = 1, table.getn(y) do   
 	found = false
-	explore(conf, message, y[z], split(y[z]), 1)
+	explore(message, split(y[z]), 1)
 	if found == false then
 		ngx.log(ngx.ERR, "[cipher-log] failure", "The property " .. y[z] .. " was not found. This could be a spelling error too.")
 	end
