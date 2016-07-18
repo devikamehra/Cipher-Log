@@ -5,6 +5,8 @@ local system_constants = require "lua_system_constants"
 local basic_serializer = require "kong.plugins.log-serializers.basic"
 local BasePlugin = require "kong.plugins.base_plugin"
 local base64 = require "resty.nettle.base64"
+local IO = require "kong.tools.io"
+local UTILS = require "kong.tools.utils"
 
 local ngx_timer = ngx.timer.at
 local string_len = string.len
@@ -94,11 +96,11 @@ end
 
 local function encrypt(text)
   
-  if algo == "aes" then
+  if algo == "aes128" or algo == "aes192" or algo == "aes256" then
   	return encryptAES(text)
   elseif algo == "blowfish" then
         return encryptBlowfish(text)
-  elseif algo == "des" then
+  elseif algo == "des" or algo == "des3" then
         return encryptDES(text)
   elseif algo == "twofish" then
         return encryptTwofish(text)
@@ -127,9 +129,7 @@ local function explore(message, array, index)
     	           if index < table.getn(array) then
 			 explore(value, array, index + 1)
 		   elseif index == table.getn(array) then
-			 encryptAll(value)
-		   else
-			
+			 encryptAll(value)			
 		   end
 		else
 		    explore(value, array, index)
@@ -146,6 +146,17 @@ local function log(premature, conf, message)
   if premature then return end
 
   algo = conf.cipher_tech
+  
+  ngx.log(ngx.ERR, "[cipher-log] failure", UTILS.get_hostname())
+ 
+  local file_content = IO.read_file(conf.key_path)
+  local file = io.open(conf.key_path, "r")
+  if file ~= nil then
+  	key = file:read()
+	ngx.log(ngx.ERR, "[cipher-log] failure", key .. #key)
+  else 
+  	key = UTILS.random_string()
+  end
 
   local y = conf.total_encrypt
   for z = 1, table.getn(y) do   
