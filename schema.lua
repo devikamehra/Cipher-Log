@@ -40,15 +40,7 @@ return {
     path = { required = true, type = "string", func = validate_file },
     cipher_tech = { type = "string", enum = ALLOWED_ENCRYPTION_TECHNIQUE, default = "blowfish" },
     total_encrypt = { type = "array", default = {}},
-    partial_encrypt = {       
-	type = "table",
-      		schema = {
-        	fields = {
-          		header = {type = "string"},
-          		regex = {type = "string"}
-        		}
-      		}
-    },
+    partial_encrypt = {type = "array", default={}},    
     key_path = { type = "string", func = validate_key_file, default = ""}
   },
   self_check = function(schema, plugin_t, dao, is_update)

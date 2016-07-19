@@ -4,6 +4,7 @@ local cjson = require "cjson"
 local system_constants = require "lua_system_constants"
 local basic_serializer = require "kong.plugins.log-serializers.basic"
 local BasePlugin = require "kong.plugins.base_plugin"
+local stringy = require "stringy"
 local base64 = require "resty.nettle.base64"
 local IO = require "kong.tools.io"
 local UTILS = require "kong.tools.utils"
@@ -31,7 +32,6 @@ char *strerror(int errnum);
 local file_descriptors = {}
 
 local key = "testtesttesttest"
-local key1 = "testtest"
 
 local algo = "blowfish"
 
@@ -47,6 +47,18 @@ end
 
 local function string_to_char(str)
   return ffi.cast("uint8_t*", str)
+end
+
+local function iter(config_array)
+  return function(config_array, i, previous_name, previous_value)
+    i = i + 1
+    local current_pair = config_array[i]
+    if current_pair == nil then -- n + 1
+      return nil
+    end
+    local current_name, current_value = unpack(stringy.split(current_pair, ":"))
+    return i, current_name, current_value  
+  end, config_array, 0
 end
 
 function split(inputstr)
@@ -78,7 +90,7 @@ end
 
 local function encryptDES(plaintext)
         local des = require "resty.nettle.des"
-        local de = des.new(key1)
+        local de = des.new(key)
         if type(plaintext) ~= "string" then
                 plaintext = tostring(plaintext)
         end
@@ -138,6 +150,37 @@ local function explore(message, array, index)
   end
 end
 
+local function explore_partial(message, array, index, regex)
+  for key, value in pairs(message) do
+        if type(value) ~= "table" then
+                if key == array[index] and index == table.getn(array) then
+                        local whole_text = message[key]
+                        local result = whole_text
+			ngx.log(ngx.ERR, "[cipher-log] failure", whole_text, regex)
+			 for word in string.gmatch(whole_text, regex) do
+				ngx.log(ngx.ERR, "[cipher-log] failure", regex, word)
+				local encrypt = encrypt(word)
+                        	result = string.gsub(result, word, encrypt)
+			end
+			ngx.log(ngx.ERR, "[cipher-log] failure", result)
+                        message[key] = result
+                        found = true
+                end
+        else
+                if key == array[index] then
+                   if index < table.getn(array) then
+                         explore_partial(value, array, index + 1, regex)
+                   elseif index == table.getn(array) then
+                         ngx.log(ngx.ERR, "[cipher-log] failure", "Partial encryption cannot be applied to " .. array[index])
+                   end
+                else
+                    explore_partial(value, array, index, regex)
+                end
+        end
+  end
+end
+
+
 -- Log to a file. Function used as callback from an nginx timer.
 -- @param `premature` see OpenResty `ngx.timer.at()`
 -- @param `conf`     Configuration table, holds http endpoint details
@@ -156,6 +199,10 @@ local function log(premature, conf, message)
 	ngx.log(ngx.ERR, "[cipher-log] failure", key .. #key)
   else 
   	key = UTILS.random_string()
+  end
+
+  for _, name, value in iter(conf.partial_encrypt) do
+	explore_partial(message, split(name), 1, value)
   end
 
   local y = conf.total_encrypt
