@@ -21,4 +21,5 @@ $ curl -X POST http://kong:8001/apis/{api}/plugins \
 | ------------- |:-------------:| 
 | name          | The name of the plugin in this case is, **cipher-log** | 
 | config.path   | The file path of the output log file. The plugin will create the file if it doesn't exist yet. Make sure Kong has write permissions to this file.      |  
-| zebra stripes | are neat      |
+| cipher_tech | The encryption algorithm to be used for encryption. The encrypted data is then base64 encoded. Currently the plugin supports the following encryption algorithms: AES128, AES192, AES256, Blowfish, DES, DES3, Twofish.|
+| total_encrypt | The json properties that need to be totally encrypted are listed here separated by comma(,). Sub-properties can be separated using ".". |
