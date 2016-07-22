@@ -156,13 +156,15 @@ local function explore_partial(message, array, index, regex)
                 if key == array[index] and index == table.getn(array) then
                         local whole_text = message[key]
                         local result = whole_text
-			ngx.log(ngx.ERR, "[cipher-log] failure", whole_text, regex)
-			 for word in string.gmatch(whole_text, regex) do
-				ngx.log(ngx.ERR, "[cipher-log] failure", regex, word)
-				local encrypt = encrypt(word)
+			local count = 0
+			for word in string.gmatch(whole_text, regex) do
+				count = count + 1
+				local encrypt = "#$" .. encrypt(word) .. "$#"
                         	result = string.gsub(result, word, encrypt)
 			end
-			ngx.log(ngx.ERR, "[cipher-log] failure", result)
+			if count == 0 then
+				ngx.log(ngx.ERR, "[cipher-log] failure", " The regex [" .. regex .. "] did not yield any results for the specified property - " .. key)
+			end
                         message[key] = result
                         found = true
                 end
@@ -189,20 +191,22 @@ local function log(premature, conf, message)
   if premature then return end
 
   algo = conf.cipher_tech
-  
-  ngx.log(ngx.ERR, "[cipher-log] failure", UTILS.get_hostname())
  
   local file_content = IO.read_file(conf.key_path)
   local file = io.open(conf.key_path, "r")
   if file ~= nil then
   	key = file:read()
-	ngx.log(ngx.ERR, "[cipher-log] failure", key .. #key)
   else 
-  	key = UTILS.random_string()
+	file = io.open(conf.key_path_gen, "r")
+	key = file:read()
   end
 
   for _, name, value in iter(conf.partial_encrypt) do
+	found = false
 	explore_partial(message, split(name), 1, value)
+	if found == false then
+                ngx.log(ngx.ERR, "[cipher-log] failure", "The property " .. name .. " was not found. This could be a spelling error too.")
+        end
   end
 
   local y = conf.total_encrypt

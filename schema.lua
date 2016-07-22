@@ -1,6 +1,7 @@
 local IO = require "kong.tools.io"
 local Errors = require "kong.dao.errors"
 local utils = require "kong.tools.utils"
+local timestamp = require "kong.tools.timestamp"
 
 local ALLOWED_ENCRYPTION_TECHNIQUE = { "aes128", "aes192", "aes256", "blowfish", "des", "des3", "twofish" }
 
@@ -27,14 +28,6 @@ local function validate_key_file(value)
    return true
 end
 
-local function create_key_file(value)
-  local exists = IO.file_exists(value)
-  if not os.execute("touch "..value) == 0 then
-    return false, "Cannot create a file in the path " .. value .. ". Make sure Kong has the right permissions to create an file for storing key."
-  end
-  return true
-end
-
 return {
   fields = {
     path = { required = true, type = "string", func = validate_file },
@@ -58,9 +51,16 @@ return {
                 	return false, Errors.schema "While using DES3 Encryption, key length of 24 is required."
 		end
 	else
-		local name_of_file = "/tmp/cipher_log_key_" .. utils.get_hostname()
-		create_key_file(name_of_file)
- 		local file = io.open(name_of_file, "w+")
+		local exists = IO.file_exists("/usr/local/share/lua/5.1/kong/cipher_log_keys/")
+		if not exists then
+       			 os.execute("mkdir ".."/usr/local/share/lua/5.1/kong/cipher_log_keys/")
+  		end
+		local name_of_file = "/usr/local/share/lua/5.1/kong/cipher_log_keys/key_" .. os.clock()
+	
+ 		if not os.execute("touch "..name_of_file) == 0 then
+   		      return false, "Cannot create a file in the path " .. name_of_file .. ". Make sure Kong has the right permissions to create an file for storing key."
+  		end
+		local file = io.open(name_of_file, "w+")
 		local key = utils.random_string()
 		if plugin_t.cipher_tech == "aes192" or plugin_t.cipher_tech == "des3" then
 			file:write(string.sub(key, 1, 24))
@@ -72,7 +72,9 @@ return {
 			file:write(key)
 		end
 		file:close()
+		plugin_t.key_path_gen = name_of_file
 	end
+	
 	return true
   end
 }
