@@ -23,7 +23,7 @@ $ curl -X POST http://kong:8001/apis/{api}/plugins \
 | config.path   | The file path of the output log file. The plugin will create the file if it doesn't exist yet. Make sure Kong has write permissions to this file.      |  
 | cipher_tech | The encryption algorithm to be used for encryption. The encrypted data is then base64 encoded. Currently the plugin supports the following encryption algorithms: AES128, AES192, AES256, Blowfish, DES, DES3, Twofish.|
 | total_encrypt | The json properties that need to be totally encrypted are listed here separated by comma(,). To move into the hierarchy of the properties we can use '.' and thus encrypt that particular sub-property. Encryption of the whole object is also passible. |
-| partial_encrypt | The json properties that need to be partially encrypted are listed here separated by comma(,). You can specify the property and the Regular Expression (separated by :) to encrypt a specific portion only.|
+| partial_encrypt | The json properties that need to be partially encrypted are listed here separated by comma(,). You can specify the property and the Regular Expression (separated by :) to encrypt a specific portion only. For assistances, you can refer to [Patterns](https://www.lua.org/pil/20.2.html)|
 | key_path | The path to the key is specified here and should be kept save. Length of the key should be in accordance with the encryption algorithm used.  Make sure Kong has read permissions to this file.|
 | key_path_gen | The path to the file containing an auto-generated key is specified here in case the *key_path* has not been specified. The key should be key kept safe.|
 
@@ -82,14 +82,14 @@ Every request will be logged separately in a JSON object separated by a new line
 ```
 A few considerations on the above JSON object:
 
-1. **request contains properties about the request sent by the client
-2. **response contains properties about the response sent to the client
-3. **api contains Kong properties about the specific API requested
-4. **authenticated_entity contains Kong properties about the authenticated consumer (if an authentication plugin has been enabled)
-5. **latencies contains some data about the latencies involved:
-> 1. **proxy is the time it took for the final service to process the request
-> 2. **kong is the internal Kong latency that it took to run all the plugins
-> 3. **request is the time elapsed between the first bytes were read from the client and after the last bytes were sent to the client. Useful for detecting slow clients.
+1. **request** contains properties about the request sent by the client
+2. **response** contains properties about the response sent to the client
+3. **api** contains Kong properties about the specific API requested
+4. **authenticated_entity** contains Kong properties about the authenticated consumer (if an authentication plugin has been enabled)
+5. **latencies** contains some data about the latencies involved:
+> 1. **proxy** is the time it took for the final service to process the request
+> 2. **kong** is the internal Kong latency that it took to run all the plugins
+> 3. **request** is the time elapsed between the first bytes were read from the client and after the last bytes were sent to the client. Useful for detecting slow clients.
 
 ### Kong Process Errors
 
