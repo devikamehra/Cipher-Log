@@ -87,9 +87,9 @@ A few considerations on the above JSON object:
 3. *api* contains Kong properties about the specific API requested
 4. *authenticated_entity* contains Kong properties about the authenticated consumer (if an authentication plugin has been enabled)
 5. *latencies* contains some data about the latencies involved:
-⋅⋅* *proxy* is the time it took for the final service to process the request
-⋅⋅* *kong* is the internal Kong latency that it took to run all the plugins
-⋅⋅* *request* is the time elapsed between the first bytes were read from the client and after the last bytes were sent to the client. Useful for detecting slow clients.
+⋅⋅1. *proxy* is the time it took for the final service to process the request
+⋅⋅2. *kong* is the internal Kong latency that it took to run all the plugins
+⋅⋅3. *request* is the time elapsed between the first bytes were read from the client and after the last bytes were sent to the client. Useful for detecting slow clients.
 
 ### Kong Process Errors
 
