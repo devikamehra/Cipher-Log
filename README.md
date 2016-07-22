@@ -82,11 +82,15 @@ Every request will be logged separately in a JSON object separated by a new line
 ```
 A few considerations on the above JSON object:
 
-1 *request* contains properties about the request sent by the client
-2 *response* contains properties about the response sent to the client
-3 *api* contains Kong properties about the specific API requested
-4 *authenticated_entity* contains Kong properties about the authenticated consumer (if an authentication plugin has been enabled)
-5 *latencies* contains some data about the latencies involved:
+1. *request* contains properties about the request sent by the client
+2. *response* contains properties about the response sent to the client
+3. *api* contains Kong properties about the specific API requested
+4. *authenticated_entity* contains Kong properties about the authenticated consumer (if an authentication plugin has been enabled)
+5. *latencies* contains some data about the latencies involved:
 ..* *proxy* is the time it took for the final service to process the request
 ..* *kong* is the internal Kong latency that it took to run all the plugins
 ..* *request* is the time elapsed between the first bytes were read from the client and after the last bytes were sent to the client. Useful for detecting slow clients.
+
+### Kong Process Errors
+
+This logging plugin will only log HTTP request and response data. If you are looking for the Kong process error file (which is the nginx error file), then you can find it at the following path: **{nginx_working_dir}/logs/error.log**
