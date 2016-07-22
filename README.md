@@ -1,10 +1,17 @@
-# README #
+# Cipher-Log #
 
-The plugin currently expects 2 parameters
-> 1. path : The location of the file where we expect to keep our file-logs
-> 2. cipher : This is an array. All the properties that we want to encrypt can be passed here.
+Add encrypted logs to the disk.
 
-Future goals
-> 1. If someone passes header of the property(for example, request), the whole block is encrypted.
-> 2. A specific sub-property can be written as request.size and thus size property of request block will only be encrypted.
-> 3. Partial encryption using regex.
+## Configuration
+
+Configuration of this plugin is easy to use. You can easily add it on the top of your API by executing the following request on your Kong server:
+
+```sh
+$ curl -X POST http://kong:8001/apis/{api}/plugins \
+    --data "name=cipher-log" \
+    --data "config.path=/tmp/file.log"
+    --data "cipher_tech=blowfish"
+    --data "total_encrypt=request.headers,api.id"
+    --data "partial_encrypt=request.request_uri:%%d%+"
+    --data "key_path=/path/to/your/key"
+``` 
