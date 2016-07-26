@@ -201,7 +201,7 @@ local function log(premature, conf, message)
   end
 
   key = file:read()
-  ngx.log(ngx.ERR, "[cipher-log] failure", key)
+  
   for _, name, value in iter(conf.partial_encrypt) do
 	found = false
 	explore_partial(message, split(name), 1, value)
