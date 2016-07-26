@@ -88,42 +88,6 @@ return {
 		if utils.table_size(plugin_t.total_encrypt) > 0 or utils.table_size(plugin_t.partial_encrypt) > 0 then
 			return false, Errors.schema "Key path is mandatory for encryption. Specify the path of a directory to save an auto-generated key or specify the key path."
 		end
---[[
-		local a = os.execute("cd ../../cipher_log_keys")
-		if a ~= 0 then
-     			os.execute("mkdir ../../cipher_log_keys")
-		end
-		local exists = IO.file_exists("/cipher_log_keys")
-		if not os.execute("cd ../../cipher_log_keys") == 0 then
-			os.execute("mkdir ../../cipher_log_keys/")
-		end
-
-		if not exists then
-       			 return false, "Error"
-			--os.execute("mkdir ".."../../cipher_log/")
-		else
-			return false, "Error_1"
-  		end
-
-		local name_of_file = "../../cipher_log_keys/key_" .. os.clock()
-	
- 		if not os.execute("touch " .. name_of_file) == 0 then
-   		      return false, "Cannot create a file in the path " .. name_of_file .. ". Make sure Kong has the right permissions to create an file for storing key."
-  		end
-		local file = io.open(name_of_file, "w+")
-		local key = utils.random_string()
-		if plugin_t.cipher_tech == "aes192" or plugin_t.cipher_tech == "des3" then
-			file:write(string.sub(key, 1, 24))
-		elseif plugin_t.cipher_tech == "aes128" then
-			file:write(string.sub(key, 1, 16))
-		elseif plugin_t.cipher_tech == "des" then
-			file:write(string.sub(key, 1, 8))
-		else
-			file:write(key)
-		end
-		file:close()
-		plugin_t.key_path_gen = name_of_file
-]]--
 	end
 	
 	return true

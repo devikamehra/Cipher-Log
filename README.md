@@ -25,7 +25,7 @@ $ curl -X POST http://kong:8001/apis/{api}/plugins \
 | total_encrypt | The json properties that need to be totally encrypted are listed here separated by comma(,). To move into the hierarchy of the properties we can use '.' and thus encrypt that particular sub-property. Encryption of the whole object is also passible. |
 | partial_encrypt | The json properties that need to be partially encrypted are listed here separated by comma(,). You can specify the property and the Regular Expression (separated by :) to encrypt a specific portion only. For assistances, you can refer to [Patterns](https://www.lua.org/pil/20.2.html)|
 | key_path | The path to the key is specified here and should be kept save. Length of the key should be in accordance with the encryption algorithm used.  Make sure Kong has read permissions to this file.|
-| key_path_gen | The path to the file containing an auto-generated key is specified here in case the *key_path* has not been specified. The key should be key kept safe.|
+| key_path_gen | The path to the file containing an auto-generated key is specified here in case the *key_path* specifies the path of the drirectory to save the key in. The key should be key kept safe.|
 
 ### Log Format
 
