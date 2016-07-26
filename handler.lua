@@ -191,16 +191,17 @@ local function log(premature, conf, message)
   if premature then return end
 
   algo = conf.cipher_tech
- 
-  local file_content = IO.read_file(conf.key_path)
-  local file = io.open(conf.key_path, "r")
-  if file ~= nil then
-  	key = file:read()
-  else 
-	file = io.open(conf.key_path_gen, "r")
-	key = file:read()
+  
+  local file
+
+  if conf.key_path_gen then
+  	file = io.open(conf.key_path_gen, "r")
+  else
+	file = io.open(conf.key_path, "r")
   end
 
+  key = file:read()
+  ngx.log(ngx.ERR, "[cipher-log] failure", key)
   for _, name, value in iter(conf.partial_encrypt) do
 	found = false
 	explore_partial(message, split(name), 1, value)
