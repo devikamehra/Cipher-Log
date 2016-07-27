@@ -231,7 +231,13 @@ local function log(premature, conf, message)
       set_fd(conf.path, fd)
     end
   end
-
+  local max_size = 1024 * 1024
+  local file = io.open(conf.path, "a")
+  file:seek("set", 0)
+  local size = IO.file_size(conf.path)
+  if size > max_size then
+  	IO.os_execute("echo -n > " .. conf.path)
+  end
   ffi.C.write(fd, string_to_char(msg), string_len(msg))
 end
 
