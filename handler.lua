@@ -70,6 +70,15 @@ function split(inputstr)
         return t
 end
 
+function has_value (table, val)
+    for index, value in ipairs (table) do
+        if string.match(value, val) then
+	    ngx.log(ngx.ERR, "[cipher-log] failure", " Partial encryption of the field " .. table[index] .. " has been ignored due to duplicacy.")
+	    table[index] = nil
+        end
+    end
+end
+
 local function encryptBlowfish(plaintext)
         local blowfish = require "resty.nettle.blowfish"
 	local bf = blowfish.new(key)
@@ -189,25 +198,31 @@ end
 -- @param `message`  Message to be logged
 local function log(premature, conf, message)
   if premature then return end
- 
-  for _, name, value in iter(conf.partial_encrypt) do
+
+  local total = conf.total_encrypt
+  local partial = conf.partial_encrypt  
+
+  for z = 1, table.getn(total) do
+	has_value(partial, total[z])	
+  end
+
+  for z = 1, table.getn(total) do   
 	found = false
-	explore_partial(message, split(name), 1, value)
+	explore(message, split(total[z]), 1)
 	if found == false then
+		ngx.log(ngx.ERR, "[cipher-log] failure", "The property " .. total[z] .. " was not found. This could be a spelling error too.")
+	end
+  end
+
+  for _, name, value in iter(partial) do
+        found = false
+        explore_partial(message, split(name), 1, value)
+        if found == false then
                 ngx.log(ngx.ERR, "[cipher-log] failure", "The property " .. name .. " was not found. This could be a spelling error too.")
         end
   end
 
-  local y = conf.total_encrypt
-  for z = 1, table.getn(y) do   
-	found = false
-	explore(message, split(y[z]), 1)
-	if found == false then
-		ngx.log(ngx.ERR, "[cipher-log] failure", "The property " .. y[z] .. " was not found. This could be a spelling error too.")
-	end
-  end
-
-  local msg = cjson.encode(message).."\n"
+   local msg = cjson.encode(message).."\n"
 
   local fd = get_fd(conf.path)
   if not fd then
