@@ -1,9 +1,8 @@
 local IO = require "kong.tools.io"
 local Errors = require "kong.dao.errors"
 local utils = require "kong.tools.utils"
-local timestamp = require "kong.tools.timestamp"
 
-local ALLOWED_ENCRYPTION_TECHNIQUE = { "aes128", "aes192", "aes256", "blowfish", "des", "des3", "twofish" }
+local ALLOWED_ENCRYPTION_TECHNIQUE = { "aes128", "aes192", "aes256", "blowfish", "des", "des3", "twofish128", "twofish192", "twofish256" }
 
 local function validate_file(value)
   local exists = IO.file_exists(value)
@@ -58,12 +57,15 @@ return {
 			end
                 	local file = io.open(path, "w+")
                 	local key = utils.random_string()
-                	if plugin_t.cipher_tech == "aes192" or plugin_t.cipher_tech == "des3" then
+                	if plugin_t.cipher_tech == "aes192" or plugin_t.cipher_tech == "des3" or plugin_t.cipher_tech == "twofish192" then
                         	file:write(string.sub(key, 1, 24))
-                	elseif plugin_t.cipher_tech == "aes128" then
+                	elseif plugin_t.cipher_tech == "aes128" or plugin_t.cipher_tech == "twofish128" then
                         	file:write(string.sub(key, 1, 16))
                 	elseif plugin_t.cipher_tech == "des" then
                         	file:write(string.sub(key, 1, 8))
+			elseif plugin_t.cipher_tech == "blowfish" then
+				key = key .. utils.random_string()
+				file:write(string.sub(key, 1, 56))
                 	else
                         	file:write(key)
                 	end
@@ -82,6 +84,14 @@ return {
 				return false, Errors.schema "While using DES Encryption, key length of 8 is required."
 			elseif plugin_t.cipher_tech == "des3" and #IO.read_file(path) ~= 25 then
                 		return false, Errors.schema "While using DES3 Encryption, key length of 24 is required."
+			elseif plugin_t.cipher_tech == "blowfish" and (#IO.read_file(path) < 8 or #IO.read_file(path) > 57) then
+				return false, Errors.schema "While using Blowfish Encryption, key length should be between 8 and 56"
+			elseif plugin_t.cipher_tech == "twofish256" and #IO.read_file(path) ~= 33 then
+                                return false, Errors.schema "While using Twofish256 Encryption, key length of 32 is required."
+			elseif plugin_t.cipher_tech == "twofish192" and #IO.read_file(path) ~= 25 then
+                                return false, Errors.schema "While using Twofish256 Encryption, key length of 24 is required."
+			elseif plugin_t.cipher_tech == "twofish128" and #IO.read_file(path) ~= 17 then
+                                return false, Errors.schema "While using Twofish256 Encryption, key length of 16 is required."
 			end
 		end
 	else

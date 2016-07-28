@@ -114,7 +114,7 @@ local function encrypt(text)
         return encryptBlowfish(text)
   elseif algo == "des" or algo == "des3" then
         return encryptDES(text)
-  elseif algo == "twofish" then
+  elseif algo == "twofish128" or algo == "twofish192" or algo == "twofish256" then
         return encryptTwofish(text)
   else
         return encryptBlowfish(text)
@@ -189,19 +189,7 @@ end
 -- @param `message`  Message to be logged
 local function log(premature, conf, message)
   if premature then return end
-
-  algo = conf.cipher_tech
-  
-  local file
-
-  if conf.key_path_gen then
-  	file = io.open(conf.key_path_gen, "r")
-  else
-	file = io.open(conf.key_path, "r")
-  end
-
-  key = file:read()
-  
+ 
   for _, name, value in iter(conf.partial_encrypt) do
 	found = false
 	explore_partial(message, split(name), 1, value)
@@ -228,6 +216,14 @@ local function log(premature, conf, message)
       local errno = ffi.errno()
       ngx.log(ngx.ERR, "[cipher-log] failed to open the file: ", ffi.string(ffi.C.strerror(errno)))
     else
+      algo = conf.cipher_tech
+      local file
+      if conf.key_path_gen then
+          file = io.open(conf.key_path_gen, "r")
+      else
+          file = io.open(conf.key_path, "r")
+      end
+      key = file:read()
       set_fd(conf.path, fd)
     end
   end
