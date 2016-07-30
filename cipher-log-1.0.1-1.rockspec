@@ -16,7 +16,7 @@ dependencies = {
 build = {
   type = "builtin",
   modules = {
-    ["kong.plugins.cipher-log.handler"] = "scr/andler.lua",
+    ["kong.plugins.cipher-log.handler"] = "scr/handler.lua",
     ["kong.plugins.cipher-log.schema"] = "scr/schema.lua"
   }
 }
