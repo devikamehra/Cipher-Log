@@ -94,3 +94,18 @@ A few considerations on the above JSON object:
 ### Kong Process Errors
 
 This logging plugin will only log HTTP request and response data. If you are looking for the Kong process error file (which is the nginx error file), then you can find it at the following path: **{[nginx_working_dir](https://getkong.org/docs/0.8.x/configuration/#nginx_working_dir)}/logs/error.log**
+=======
+
+### How to use
+The plugin can be installed with luarocks package manager.
+```sh
+    $ luarocks install cipher-log
+```
+That's all :), you are ready to get started.
+
+### How to Contribute
+Contribute by creating issues in the repository. 
+
+### Using Cipher-log?
+If you are using this plugin and would like to be mentioned here, please let us know by opening an issue.
+
